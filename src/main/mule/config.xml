@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:blackboard="http://www.mulesoft.org/schema/connectivity/blackboard" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/schema/connectivity/blackboard/current/mule-blackboard.xsd">
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="dc54c46a-fdcf-40a0-8082-d392a36ebdae" >
 		<http:listener-connection host="${https.host}" port="${https.port}" protocol="HTTPS">
 			<tls:context >
@@ -14,4 +15,10 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	</http:listener-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="b780f5e1-ee00-4838-b25e-fa3cd238a2d3" file="config.yaml" />
 	<configuration doc:name="Configuration" doc:id="7b167c34-5296-4ae2-878b-13af85f5f607" defaultErrorHandler-ref="Global-Error-Handler" />
+	<blackboard:config name="Token_Blackboard_config" doc:name="Blackboard config" doc:id="99ee482c-0090-48d2-b03d-4b8a8ac0557f" >
+		<blackboard:authorization-connection baseUri="https://blackboard.poc.nexturn.com/learn/api/public/v1" token="NGQ3YTQzNDAtZDRiOS00ZTg3LThiNTUtZWUyOTY4NDMxNzI4OlVBMzBXMk9OWW1ZSHBNVXROM09ablAzS2hMalVLeG1G" />
+	</blackboard:config>
+	<blackboard:config name="Blackboard_config" doc:name="Blackboard config" doc:id="89d3dfb8-d348-4c5a-b61b-15b9887605a0" >
+		<blackboard:authorization-connection baseUri="https://blackboard.poc.nexturn.com/learn/api/public" token="#[ vars.blackboardToken.access_token]" />
+	</blackboard:config>
 </mule>

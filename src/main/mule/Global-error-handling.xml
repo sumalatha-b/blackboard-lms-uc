@@ -2,7 +2,7 @@
 		<ee:transform doc:name="Transform Message"> <ee:message> <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-(error.errorMessage.payload default "Unexpected error occurred")]]></ee:set-payload> </ee:message>
+(error.description default error.errorMessage.payload )]]></ee:set-payload> </ee:message>
 			<ee:variables >
 				<ee:set-variable variableName="httpStatus " ><![CDATA[%dw 2.0
 output application/json

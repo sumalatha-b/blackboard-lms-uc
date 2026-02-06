@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="
+<mule xmlns:blackboard="http://www.mulesoft.org/schema/connectivity/blackboard"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/schema/connectivity/blackboard/current/mule-blackboard.xsd">
 	 <flow name="put:\v1\catalog\categories\(categoryType)\(categoryId)\courses\(courseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="06baed8f-44b1-44c8-b95d-bc85d77acd4a" config-ref="HTTP_Listener_config" allowedMethods="PUT" path="/v1/catalog/categories/{categoryType}\{categoryId}\courses\{courseId}">
 			<http:response statusCode="#[vars.httpStatus default 200]" />
@@ -21,7 +22,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="courseId">attributes.uriParams.'courseId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="cacdc704-1338-4e0c-8f50-3e58de95c436" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="cacdc704-1338-4e0c-8f50-3e58de95c436" name="accesstoken_Flow" target="blackboardToken"/>
 		<set-variable value="#[attributes.statusCode]" doc:name="httpStatus" doc:id="1b52a9b5-823b-4343-8465-164e4c9027c3" variableName="httpStatus" />
     </flow>
     <flow name="put:\v1\courses\(courseId)\children\(childCourseId):blackboard-rest-api-config">
@@ -37,7 +38,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="childCourseId">attributes.uriParams.'childCourseId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="0a83acde-caaf-4b89-b2f9-157735d7707c" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="0a83acde-caaf-4b89-b2f9-157735d7707c" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="put:\v1\courses\(courseId)\users\(userId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="003d20f0-0193-4d84-8bc1-f4de4ad28cf0" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users/{userId}" allowedMethods="PUT" >
@@ -52,7 +53,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="userId">attributes.uriParams.'userId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="541f442b-0db8-4a33-a798-ba918ae97e13" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="541f442b-0db8-4a33-a798-ba918ae97e13" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="delete:\v1\catalog\categories\(categoryType)\(categoryId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="9bd70bd5-d222-472b-bc17-8204e7e170e8" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{categoryId}" allowedMethods="DELETE" >
@@ -67,7 +68,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="categoryId">attributes.uriParams.'categoryId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="68e90b94-9b8e-48e3-b59a-ae8c9defec2e" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="68e90b94-9b8e-48e3-b59a-ae8c9defec2e" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="delete:\v1\catalog\categories\(categoryType)\(categoryId)\courses\(courseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="7c848e14-e178-48e6-a14b-852e4d76fdf1" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{categoryId}/courses/{courseId}" allowedMethods="DELETE" >
@@ -83,7 +84,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="courseId">attributes.uriParams.'courseId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="099c654f-94ac-4faf-98e9-b88ad19e470f" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="099c654f-94ac-4faf-98e9-b88ad19e470f" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="delete:\v1\courses\(courseId)\children\(childCourseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="3c28c9fd-4f86-4eb5-b363-94a4f10a487d" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/children/{childCourseId}" allowedMethods="DELETE" >
@@ -98,7 +99,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="childCourseId">attributes.uriParams.'childCourseId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="b05c048a-1ff8-4f25-be49-833ea8f37e78" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="b05c048a-1ff8-4f25-be49-833ea8f37e78" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="delete:\v1\courses\(courseId)\meetings:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="8f5854b2-4a1d-4cf5-83e0-0c5d50e90405" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings" allowedMethods="DELETE" >
@@ -112,7 +113,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="courseId">attributes.uriParams.'courseId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="b9fe35fb-c947-414c-baf0-6894ad0c1730" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="b9fe35fb-c947-414c-baf0-6894ad0c1730" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="delete:\v1\courses\(courseId)\meetings\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="79b4cba3-e1c2-436f-ad66-d0499ec542a7" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/users/{userId}" allowedMethods="DELETE" >
@@ -127,7 +128,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="userId">attributes.uriParams.'userId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="05de4fb6-f06a-438d-bf04-92237f051e99" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="05de4fb6-f06a-438d-bf04-92237f051e99" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="delete:\v1\courses\(courseId)\meetings\(meetingId)\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="480a22ee-2336-494e-9a29-9bf0b7e6d442" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/{meetingId}/users/{userId}" allowedMethods="DELETE" >
@@ -143,7 +144,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="userId">attributes.uriParams.'userId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="4ff761d6-057a-4dff-b274-61960a830e0d" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="4ff761d6-057a-4dff-b274-61960a830e0d" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="delete:\v1\courses\(courseId)\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="fc92f921-6671-48ab-9725-d118835c1417" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users/{userId}" allowedMethods="DELETE" >
@@ -158,7 +159,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="userId">attributes.uriParams.'userId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="8aec9883-c620-4df2-aa95-0e8c2d41a8b7" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="8aec9883-c620-4df2-aa95-0e8c2d41a8b7" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="delete:\v1\terms\(termId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="f200ea4a-dc08-4d27-9e97-4b4537d7d641" config-ref="HTTP_Listener_config" path="/v1/terms/{termId}" allowedMethods="DELETE" >
@@ -172,7 +173,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="termId">attributes.uriParams.'termId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="eba0a12d-ce51-45d7-8566-b918b6af004c" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="eba0a12d-ce51-45d7-8566-b918b6af004c" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="delete:\v1\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="b9acb5fc-0bac-458a-9d3e-207be2f5ad67" config-ref="HTTP_Listener_config" path="/v1/users/{userId}" allowedMethods="DELETE" >
@@ -186,7 +187,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="userId">attributes.uriParams.'userId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="d0cf097e-9ded-4576-84fd-d58e2f219b0b" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="d0cf097e-9ded-4576-84fd-d58e2f219b0b" name="accesstoken_Flow" target="blackboardToken"/>
         <set-variable value="#[attributes.statusCode]" doc:name="httpStatus" doc:id="0712ae85-8ee6-49a2-875f-91e1a8c878c2" variableName="httpStatus" />
     </flow>
     <flow name="delete:\v3\courses\(courseId):blackboard-rest-api-config">
@@ -201,7 +202,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="courseId">attributes.uriParams.'courseId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="eb9467a3-befa-45fc-9740-743757a0445a" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="eb9467a3-befa-45fc-9740-743757a0445a" name="accesstoken_Flow" target="blackboardToken"/>
         <set-variable value="#[attributes.statusCode]" doc:name="httpStatus" doc:id="6d740b9f-54c9-4459-b0a4-3901338f3e84" variableName="httpStatus" />
     </flow>
     <flow name="patch:\v1\catalog\categories\(categoryType)\(categoryId):application\json:blackboard-rest-api-config">
@@ -217,7 +218,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="categoryId">attributes.uriParams.'categoryId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="6666194a-38d4-40e4-8c65-e1fd4370a2b9" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="6666194a-38d4-40e4-8c65-e1fd4370a2b9" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="patch:\v1\courses\(courseId)\meetings\(meetingId)\users\(userId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="ec6c88fd-abfd-4532-952e-02f8505ee1ca" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/{meetingId}/users/{userId}" allowedMethods="PATCH" >
@@ -233,7 +234,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="userId">attributes.uriParams.'userId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="4ad28817-e335-4402-9568-4b90a9d68151" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="4ad28817-e335-4402-9568-4b90a9d68151" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="patch:\v1\courses\(courseId)\users\(userId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="8dc34e70-5880-4ab1-824d-0336ee97e9dd" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users/{userId}" allowedMethods="PATCH" >
@@ -248,7 +249,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="userId">attributes.uriParams.'userId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="bee1c2f4-0f26-49f8-9d9e-1f442a9627b1" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="bee1c2f4-0f26-49f8-9d9e-1f442a9627b1" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="patch:\v1\terms\(termId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="09d65c3c-40cc-4605-8c11-4b9e0dcf3722" config-ref="HTTP_Listener_config" path="/v1/terms/{termId}" allowedMethods="PATCH" >
@@ -262,7 +263,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="termId">attributes.uriParams.'termId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="f89a8870-4a66-45e2-950d-e0e766611bdc" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="f89a8870-4a66-45e2-950d-e0e766611bdc" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="patch:\v1\users\(userId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="e938286e-6adb-413e-9bc2-02a75613ae47" config-ref="HTTP_Listener_config" path="/v1/users/{userId}" allowedMethods="PATCH" >
@@ -276,7 +277,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="userId">attributes.uriParams.'userId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="6dc30b28-6477-44b0-a716-4a1abe0c8aaf" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="6dc30b28-6477-44b0-a716-4a1abe0c8aaf" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="patch:\v3\courses\(courseId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="6f59235c-3258-4b2d-b1ff-1fe4f5286fef" config-ref="HTTP_Listener_config" path="/v3/courses/{courseId}" allowedMethods="PATCH" >
@@ -290,7 +291,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="courseId">attributes.uriParams.'courseId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="c95df258-e2de-4114-8827-0e3a2f505a7d" name="accesstoken_Flow" />
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="c95df258-e2de-4114-8827-0e3a2f505a7d" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="get:\v1\calendars\items:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="72b46eb2-a130-4331-a344-bbb732f63516" config-ref="HTTP_Listener_config" path="/v1/calendars/items" allowedMethods="GET" >
@@ -299,8 +300,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
 		</http:listener>
-		<flow-ref doc:name="blackboard-token-subFlow" doc:id="c6acb409-cc17-401c-b308-3072067d3764" name="accesstoken_Flow" />
-    </flow>
+		<flow-ref doc:name="blackboard-token-subFlow" doc:id="c6acb409-cc17-401c-b308-3072067d3764" name="accesstoken_Flow" target="blackboardToken"/>
+		<blackboard:upcoming-events doc:name="Users - Upcoming events" doc:id="4611c889-2787-4762-a627-cba90ef428de" config-ref="Blackboard_config" correlationId="#[correlationId]"/>
+    
+</flow>
     <flow name="get:\v1\catalog\categories\(categoryType):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="1145891c-7349-42c0-9c78-71250784c253" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}" allowedMethods="GET" >
 			<http:response statusCode="#[vars.httpStatus default 200]" />
@@ -313,8 +316,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="categoryType">attributes.uriParams.'categoryType'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="15ad9a97-b58f-4522-96c6-37d0ff6acaf0" name="accesstoken_Flow" />
-    </flow>
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="15ad9a97-b58f-4522-96c6-37d0ff6acaf0" name="accesstoken_Flow" target="blackboardToken"/>
+		<blackboard:get-categories doc:name="Course Category - Get Categories" doc:id="8dee87cd-052a-4895-9538-2ff81fca92d8" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" correlationId="#[correlationId]"/>
+    
+</flow>
     <flow name="get:\v1\catalog\categories\(categoryType)\(categoryId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="5647e9be-d1c8-4e64-a013-1d34318f7a20" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{categoryId}" allowedMethods="GET" >
 			<http:response statusCode="#[vars.httpStatus default 200]" />
@@ -328,8 +333,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="categoryId">attributes.uriParams.'categoryId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="baf776a8-e062-4e60-9909-24c6de097fe6" name="accesstoken_Flow" />
-    </flow>
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="baf776a8-e062-4e60-9909-24c6de097fe6" name="accesstoken_Flow" target="blackboardToken"/>
+		<blackboard:get-category doc:name="Course Category - Get Category" doc:id="d427dfdb-1839-4935-8ba5-111065884046" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" correlationId="#[correlationId]"/>
+    
+</flow>
     <flow name="get:\v1\catalog\categories\(categoryType)\(categoryId)\courses:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="4e07ddb4-0904-43ac-aa18-a6425aadbabf" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{categoryId}/courses" allowedMethods="GET" >
 			<http:response statusCode="#[vars.httpStatus default 200]" />
@@ -343,8 +350,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="categoryId">attributes.uriParams.'categoryId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="986d737b-bf94-4bd0-8dac-20b8c7be740f" name="accesstoken_Flow" />
-    </flow>
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="986d737b-bf94-4bd0-8dac-20b8c7be740f" name="accesstoken_Flow" target="blackboardToken"/>
+		<blackboard:get-category-memberships doc:name="Course Category - Get Category Memberships" doc:id="3df76bf8-fa9a-4e9f-8c3e-b41a02148d39" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" correlationId="#[correlationId]"/>
+    
+</flow>
     <flow name="get:\v1\catalog\categories\(categoryType)\(parentId)\children:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="088e61ba-510e-4b54-bf24-dd3825995008" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{parentId}/children" allowedMethods="GET" >
 			<http:response statusCode="#[vars.httpStatus default 200]" />
@@ -358,8 +367,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="parentId">attributes.uriParams.'parentId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="8b2037f5-927e-426a-82a7-de0302dfa3e7" name="accesstoken_Flow" />
-    </flow>
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="8b2037f5-927e-426a-82a7-de0302dfa3e7" name="accesstoken_Flow" target="blackboardToken"/>
+		<blackboard:get-child-categories doc:name="Course Category - Get Child Categories" doc:id="b82d2cb3-0a0f-496e-96ce-8de9ead4917f" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" parentId="#[vars.parentId]" correlationId="#[correlationId]"/>
+    
+</flow>
     <flow name="get:\v1\courseRoles:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="54e7d6c7-f474-4412-b81d-e47c327fe316" config-ref="HTTP_Listener_config" path="/v1/courseRoles" allowedMethods="GET" >
 			<http:response statusCode="#[vars.httpStatus default 200]" />
@@ -367,8 +378,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
 		</http:listener>
-		<flow-ref doc:name="blackboard-token-subFlow" doc:id="406b8f53-5dca-4c8d-90cf-4162458b3f6c" name="accesstoken_Flow" />
-    </flow>
+		<flow-ref doc:name="blackboard-token-subFlow" doc:id="406b8f53-5dca-4c8d-90cf-4162458b3f6c" name="accesstoken_Flow" target="blackboardToken"/>
+		<blackboard:get-course-roles doc:name="Roles - Get Course Roles" doc:id="775e24c0-3bd1-42df-b9fe-8c23e2886569" config-ref="Blackboard_config" correlationId="#[correlationId]"/>
+    
+</flow>
     <flow name="get:\v1\courseRoles\(roleId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="d17b3328-330b-4e47-b40a-bd035863002f" config-ref="HTTP_Listener_config" path="/v1/courseRoles/{roleId}" allowedMethods="GET" >
 			<http:response statusCode="#[vars.httpStatus default 200]" />
@@ -381,8 +394,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <ee:set-variable variableName="roleId">attributes.uriParams.'roleId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <flow-ref doc:name="blackboard-token-subFlow" doc:id="898ca2d8-eee3-47db-a494-75847c3b3782" name="accesstoken_Flow" />
-    </flow>
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="898ca2d8-eee3-47db-a494-75847c3b3782" name="accesstoken_Flow" target="blackboardToken"/>
+		<blackboard:get-course-role doc:name="Roles - Get Course Role" doc:id="26666902-df4d-4a11-bf39-1b5716e33183" config-ref="Blackboard_config" roleId="#[vars.roleId]" correlationId="#[correlationId]"/>
+    
+</flow>
     <flow name="get:\v1\courses\(courseId)\children:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="08b851b0-5f2b-4ca4-8bc5-a831914a463c" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/children" allowedMethods="GET" >
 			<http:response statusCode="#[vars.httpStatus default 200]" />
@@ -396,7 +411,9 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="fa72e1fb-d147-4b69-96cb-8fa426d8a565" name="accesstoken_Flow" />
-    </flow>
+		<blackboard:getcourse-children doc:name="Courses - Get Course Children" doc:id="61a8855b-9ceb-4022-9b95-4f92a151e95c" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]"/>
+    
+</flow>
     <flow name="get:\v1\courses\(courseId)\children\(childCourseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="40973ad0-a867-42eb-8bd6-eebfe6ae016c" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/children/{childCourseId}" allowedMethods="GET" >
 			<http:response statusCode="#[vars.httpStatus default 200]" />
@@ -680,8 +697,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
 		</http:listener>
-		<flow-ref doc:name="blackboard-token-subFlow" doc:id="8aee3d35-b3cc-468d-b6a3-940799e1a6b8" name="accesstoken_Flow" />
-    </flow>
+		<flow-ref doc:name="blackboard-token-subFlow" doc:id="8aee3d35-b3cc-468d-b6a3-940799e1a6b8" name="accesstoken_Flow" target="blackboardToken"/>
+		<blackboard:get-courses doc:name="Courses - Get Courses" doc:id="b15133a0-f3ae-48a1-a2d8-4f7546756114" config-ref="Blackboard_config" correlationId="#[correlationId]"/>
+    
+</flow>
     <flow name="get:\v3\courses\(courseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="e71a4d08-5b21-47ae-a0cd-f55c30da82b4" config-ref="HTTP_Listener_config" path="/v3/courses/{courseId}" allowedMethods="GET" >
 			<http:response statusCode="#[vars.httpStatus default 200]" />

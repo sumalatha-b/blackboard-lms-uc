@@ -9,7 +9,8 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="dc54c46a-fdcf-40a0-8082-d392a36ebdae" >
 		<http:listener-connection host="${https.host}" port="${https.port}" protocol="HTTPS">
 			<tls:context >
-				<tls:key-store type="jks" path="Client-Keystore.jks" keyPassword="Mule12345" password="Mule12345" />
+				<tls:trust-store path="client-truststore.jks" password="Mule12345" type="jks" insecure="true" />
+				<tls:key-store type="jks" path="client-keystore.jks" keyPassword="Mule12345" password="Mule12345" />
 			</tls:context>
 		</http:listener-connection>
 	</http:listener-config>

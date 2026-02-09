@@ -409,7 +409,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 </flow>
     <flow name="get:\v1\catalog\categories\(categoryType)\(categoryId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="71805669-90ca-4de9-b0f2-c18229f465ee" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{categoryId}" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -780,7 +779,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="blackboard-token-subFlow" doc:id="c784cbc5-71ac-47e2-b2a4-87cc40ec0b1d" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-users doc:name="Users - Get Users" doc:id="87316201-10b8-47ac-a3ca-e5f4c0738f3d" config-ref="Blackboard_config" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="e716e288-956f-4244-a6b1-5899ef1800d4" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-users doc:name="Users - Get Users" doc:id="87316201-10b8-47ac-a3ca-e5f4c0738f3d" config-ref="Blackboard_config" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-users doc:name="Users - Get Users" doc:id="854a9a09-aead-4fbe-9b58-b0a2e4256500" config-ref="Blackboard_config" correlationId="#[correlationId]" offset='#[attributes.queryParams.offset default ""]' limit='#[attributes.queryParams.limit default ""]' userName='#[attributes.queryParams.userName default ""]' externalId='#[attributes.queryParams.externalId default ""]' created='#[attributes.queryParams.created default ""]' createdCompare='#[attributes.queryParams.createdCompare default ""]' modified='#[attributes.queryParams.modified default ""]' modifiedCompare='#[attributes.queryParams.modified default ""]' lastLogin='#[attributes.queryParams.lastLogin default ""]' lastLoginCompare='#[attributes.queryParams.lastLoginCompare default ""]' dataSourceId='#[attributes.queryParams.dataSourceId default ""]' name.family="#[attributes.queryParams.'name.family' default &quot;&quot;]" studentId='#[attributes.queryParams.studentId default ""]' contact.email="#[attributes.queryParams.'contact.email' default &quot;&quot;]" availability.available="#[attributes.queryParams.'availability.available' default &quot;&quot;]" sort='#[attributes.queryParams.sort default ""]' fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="b8793274-2129-4d4e-a7c0-63eb4df98880" config-ref="HTTP_Listener_config" path="/v1/users/{userId}" allowedMethods="GET" >
@@ -947,7 +953,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="blackboard-token-subFlow" doc:id="b96a22f2-1e27-428a-b855-ac49bd7196f3" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-courses doc:name="Courses - Get Courses" doc:id="43db6a0c-ee30-437e-a28c-45e06f440229" config-ref="Blackboard_config" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="3a87dcf4-4005-4108-9dd4-92debe15e2b3" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-courses doc:name="Courses - Get Courses" doc:id="43db6a0c-ee30-437e-a28c-45e06f440229" config-ref="Blackboard_config" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-courses doc:name="Courses - Get Courses" doc:id="9ff93c18-303a-4ac5-ab1d-815bd27b6c95" config-ref="Blackboard_config" correlationId="#[correlationId]" offset='#[attributes.queryParams.offset default ""]' limit='#[attributes.queryParams.limit default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" modified='#[attributes.queryParams.modified default ""]' modifiedCompare='#[attributes.queryParams.modifiedCompare default ""]' courseId='#[attributes.queryParams.courseId default ""]' name='#[attributes.queryParams.name default ""]' description='#[attributes.queryParams.description default ""]' externalId='#[attributes.queryParams.externalId default ""]' created='#[attributes.queryParams.created default ""]' createdCompare='#[attributes.queryParams.createdCompare default ""]' allowGuests="#[isEmpty(attributes.queryParams.allowGuests)]" availability.available="#[attributes.queryParams.'availability.available' default &quot;&quot;]" dataSourceId='#[attributes.queryParams.dataSourceId default ""]' termId='#[attributes.queryParams.termId default ""]' organization="#[isEmpty(attributes.queryParams.organization)]" sort='#[attributes.queryParams.sort default ""]' fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     
 </flow>
     <flow name="get:\v3\courses\(courseId):blackboard-rest-api-config">
@@ -1089,6 +1102,7 @@ output application/json
     </flow>
     <flow name="post:\v1\users:application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="a16d9c60-2eae-444f-8113-f6db0c39c136" config-ref="HTTP_Listener_config" path="/v1/users" allowedMethods="POST" >
+			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -1106,6 +1120,7 @@ output application/json
 		</blackboard:create-user>
 			</otherwise>
 		</choice>
+		<set-variable value="#[attributes.statusCode]" doc:name="httpStatus" doc:id="a0530b2f-ea04-44d9-ad04-004412016873" variableName="httpStatus" />
     </flow>
     <flow name="post:\v3\courses:application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="acc5d410-d0ad-4497-b8b2-10b8165ef16d" config-ref="HTTP_Listener_config" path="/v3/courses" allowedMethods="POST" >

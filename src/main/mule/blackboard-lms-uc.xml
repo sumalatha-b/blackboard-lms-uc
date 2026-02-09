@@ -9,7 +9,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/schema/connectivity/blackboard/current/mule-blackboard.xsd">
 	<flow name="put:\v1\catalog\categories\(categoryType)\(categoryId)\courses\(courseId):blackboard-rest-api-config">
-        <http:listener doc:name="Listener" doc:id="e36477c6-bf42-4e4c-95a1-b1493bf1cfe9" config-ref="HTTP_Listener_config" allowedMethods="PUT" path="/v1/catalog/categories/{categoryType}\{categoryId}\courses\{courseId}">
+        <http:listener doc:name="Listener" doc:id="e36477c6-bf42-4e4c-95a1-b1493bf1cfe9" config-ref="HTTP_Listener_config" allowedMethods="PUT" path="/v1/catalog/categories/{categoryType}/{categoryId}/courses/{courseId}">
 			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
@@ -23,12 +23,18 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="ab42ecf9-122d-47c9-806f-aa67b0dda9ae" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:create-category-membership doc:name="Course Category - Create Category Membership" doc:id="d15fc4be-5ffa-4b0e-ae5a-2913b94c9f79" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" courseId="#[vars.courseId]" correlationId="#[correlationId]" config-ref="Blackboard_config"/>
+		<choice doc:name="Choice" doc:id="07474d6c-4fac-4a9d-82fd-5e7db6555f7b" >
+			<when expression="#[isEmpty(attributes.queryParams.fields)]">
+				<blackboard:create-category-membership doc:name="Course Category - Create Category Membership" doc:id="d15fc4be-5ffa-4b0e-ae5a-2913b94c9f79" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" courseId="#[vars.courseId]" correlationId="#[correlationId]" config-ref="Blackboard_config" />
+			</when>
+			<otherwise >
+				<blackboard:create-category-membership doc:name="Course Category - Create Category Membership" doc:id="415a096c-ad04-4b19-a628-84ac61589ceb" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" courseId="#[vars.courseId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
 		<set-variable value="#[attributes.statusCode]" doc:name="httpStatus" doc:id="7fa6de9f-ee8b-44f7-979e-7c976263e3fe" variableName="httpStatus" />
     </flow>
     <flow name="put:\v1\courses\(courseId)\children\(childCourseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="a81f6ad6-08c0-46f2-a12d-ac7f9c6352e4" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/children/{childCourseId}" allowedMethods="PUT" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -40,11 +46,17 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="cb9415b7-8e3a-4a8b-8e1e-735d3cc07f81" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:add-child-course doc:name="Courses - Add Child Course" doc:id="21e553b3-9233-4763-85fb-a1a61b693a69" config-ref="Blackboard_config" courseId="#[vars.courseId]" childCourseId="#[vars.childCourseId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="75ca2ac4-bc8a-4283-a814-d64d1f654de8" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:add-child-course doc:name="Courses - Add Child Course" doc:id="21e553b3-9233-4763-85fb-a1a61b693a69" config-ref="Blackboard_config" courseId="#[vars.courseId]" childCourseId="#[vars.childCourseId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:add-child-course doc:name="Courses - Add Child Course" doc:id="b8875993-6796-42e4-864a-2619e716adf7" config-ref="Blackboard_config" courseId="#[vars.courseId]" childCourseId="#[vars.childCourseId]" correlationId="#[correlationId]" ignoreEnrollmentErrors="#[isEmpty(attributes.queryParams.ignoreEmrollmentErrors)]" fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="put:\v1\courses\(courseId)\users\(userId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="077041a8-53a2-4818-b80d-44a3d1bf8cf3" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users/{userId}" allowedMethods="PUT" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -56,9 +68,18 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="860bc272-429a-458e-af00-8ade30e12dcb" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:create-course-user-membership doc:name="Course Membership - Create Course User Membership" doc:id="c70eae45-69ca-41d5-bbcc-c24373b02564" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]">
-			<blackboard:course_membership_-_create_course_user_membership--body ><![CDATA[#[payload]]]></blackboard:course_membership_-_create_course_user_membership--body>
+		<choice doc:name="Choice" doc:id="b6dec583-bf86-44fb-b74e-4cfb2d8e0c6b" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:create-course-user-membership doc:name="Course Membership - Create Course User Membership" doc:id="c70eae45-69ca-41d5-bbcc-c24373b02564" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]">
+			<blackboard:course_membership_-_create_course_user_membership--body><![CDATA[#[payload]]]></blackboard:course_membership_-_create_course_user_membership--body>
 		</blackboard:create-course-user-membership>
+			</when>
+			<otherwise >
+				<blackboard:create-course-user-membership doc:name="Course Membership - Create Course User Membership" doc:id="87e96bb0-584f-4d9a-9638-80628a85bef8" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:course_membership_-_create_course_user_membership--body><![CDATA[#[payload]]]></blackboard:course_membership_-_create_course_user_membership--body>
+		</blackboard:create-course-user-membership>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="delete:\v1\catalog\categories\(categoryType)\(categoryId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="9e882060-4c83-498c-8069-3a3cb262fad3" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{categoryId}" allowedMethods="DELETE" >
@@ -78,7 +99,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="delete:\v1\catalog\categories\(categoryType)\(categoryId)\courses\(courseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="2fc5d451-112b-4e62-8857-47aefcac0267" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{categoryId}/courses/{courseId}" allowedMethods="DELETE" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -95,7 +115,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="delete:\v1\courses\(courseId)\children\(childCourseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="d4a63d99-eb69-4dda-9ea3-842dfbdde919" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/children/{childCourseId}" allowedMethods="DELETE" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -111,7 +130,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="delete:\v1\courses\(courseId)\meetings:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="2f7f6fc8-7640-4868-8e51-90b2c2d46aeb" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings" allowedMethods="DELETE" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -126,7 +144,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="delete:\v1\courses\(courseId)\meetings\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="3765b02f-8a8b-42c2-910f-276ec0194ab8" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/users/{userId}" allowedMethods="DELETE" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -142,7 +159,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="delete:\v1\courses\(courseId)\meetings\(meetingId)\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="443c2f53-9acf-48fb-9b7f-4e704eab492f" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/{meetingId}/users/{userId}" allowedMethods="DELETE" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -159,7 +175,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="delete:\v1\courses\(courseId)\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="a12708d9-0cf6-4ef6-9d1c-e498fac8e5dc" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users/{userId}" allowedMethods="DELETE" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -175,7 +190,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="delete:\v1\terms\(termId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="c73c7b88-7e2e-41b9-b5ef-127d6ca7eb17" config-ref="HTTP_Listener_config" path="/v1/terms/{termId}" allowedMethods="DELETE" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -190,7 +204,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="delete:\v1\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="fa82d91d-1394-42e4-a176-e7257657447b" config-ref="HTTP_Listener_config" path="/v1/users/{userId}" allowedMethods="DELETE" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -233,10 +246,10 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
                 <ee:set-variable variableName="categoryId">attributes.uriParams.'categoryId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <blackboard:update-category doc:name="Course Category - Update Category" doc:id="ffbbafe5-dfb8-422b-a01a-7ebe52e12f29" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" correlationId="#[correlationId]">
+        <flow-ref doc:name="blackboard-token-subFlow" doc:id="4cdfaa0c-6e1f-44f3-afcd-e72d63731932" name="accesstoken_Flow" target="blackboardToken" />
+		<blackboard:update-category doc:name="Course Category - Update Category" doc:id="ffbbafe5-dfb8-422b-a01a-7ebe52e12f29" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" correlationId="#[correlationId]">
 			<blackboard:course_category_-_update_category--body ><![CDATA[#[payload]]]></blackboard:course_category_-_update_category--body>
 		</blackboard:update-category>
-		<flow-ref doc:name="blackboard-token-subFlow" doc:id="4cdfaa0c-6e1f-44f3-afcd-e72d63731932" name="accesstoken_Flow" target="blackboardToken"/>
     </flow>
     <flow name="patch:\v1\courses\(courseId)\meetings\(meetingId)\users\(userId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="d7f0c05d-4660-4c67-9e3b-f07a18b631fe" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/{meetingId}/users/{userId}" allowedMethods="PATCH" >
@@ -253,9 +266,18 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="43130bd3-1bb4-4869-b449-9504cb3fdfcf" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:update-attendance-record doc:name="Attendance - Update Attendance Record" doc:id="b88e1d40-f239-478a-8bf4-5b5a9edee68f" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" userId="#[vars.userId]" correlationId="#[correlationId]">
-			<blackboard:attendance_-_update_attendance_record--body ><![CDATA[#[payload]]]></blackboard:attendance_-_update_attendance_record--body>
+		<choice doc:name="Choice" doc:id="38586dcb-bff7-44b5-879b-b5e43e95ba16" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:update-attendance-record doc:name="Attendance - Update Attendance Record" doc:id="b88e1d40-f239-478a-8bf4-5b5a9edee68f" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" userId="#[vars.userId]" correlationId="#[correlationId]">
+			<blackboard:attendance_-_update_attendance_record--body><![CDATA[#[payload]]]></blackboard:attendance_-_update_attendance_record--body>
 		</blackboard:update-attendance-record>
+			</when>
+			<otherwise >
+				<blackboard:update-attendance-record doc:name="Attendance - Update Attendance Record" doc:id="4aa42b8e-d0c2-46c2-bf04-79b7ba38a5c2" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" userId="#[vars.userId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:attendance_-_update_attendance_record--body><![CDATA[#[payload]]]></blackboard:attendance_-_update_attendance_record--body>
+		</blackboard:update-attendance-record>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="patch:\v1\courses\(courseId)\users\(userId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="1465e5ee-dbda-4220-8cd0-199afb7f47e5" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users/{userId}" allowedMethods="PATCH" >
@@ -288,9 +310,18 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="8afb0f2b-5cc1-4b28-ae89-a8840ad66198" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:update-term doc:name="Terms - Update Term" doc:id="9d2ccdc1-60b6-4eda-bff2-8c6241b70bec" config-ref="Blackboard_config" termId="#[vars.termId]" correlationId="#[correlationId]">
-			<blackboard:terms_-_update_term--body ><![CDATA[#[payload]]]></blackboard:terms_-_update_term--body>
+		<choice doc:name="Choice" doc:id="9c091a09-51b8-4544-97c5-5df5059e6940" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:update-term doc:name="Terms - Update Term" doc:id="9d2ccdc1-60b6-4eda-bff2-8c6241b70bec" config-ref="Blackboard_config" termId="#[vars.termId]" correlationId="#[correlationId]">
+			<blackboard:terms_-_update_term--body><![CDATA[#[payload]]]></blackboard:terms_-_update_term--body>
 		</blackboard:update-term>
+			</when>
+			<otherwise >
+				<blackboard:update-term doc:name="Terms - Update Term" doc:id="72ddba46-db11-484b-8603-c6d5346a0ec7" config-ref="Blackboard_config" termId="#[vars.termId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:terms_-_update_term--body><![CDATA[#[payload]]]></blackboard:terms_-_update_term--body>
+		</blackboard:update-term>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="patch:\v1\users\(userId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="4e178b20-fc33-4829-a9e6-d9cf431e6dfb" config-ref="HTTP_Listener_config" path="/v1/users/{userId}" allowedMethods="PATCH" >
@@ -305,9 +336,18 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="f417b29f-9e02-4699-824e-7750f0a63410" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:update-user doc:name="Users - Update User" doc:id="c6c1facf-da08-40d0-948c-ac084f3bbc4d" config-ref="Blackboard_config" userId="#[vars.userId]" correlationId="#[correlationId]">
-			<blackboard:users_-_update_user--body ><![CDATA[#[payload]]]></blackboard:users_-_update_user--body>
+		<choice doc:name="Choice" doc:id="89d4830f-a10b-4509-b3dd-299f1e62937a" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:update-user doc:name="Users - Update User" doc:id="c6c1facf-da08-40d0-948c-ac084f3bbc4d" config-ref="Blackboard_config" userId="#[vars.userId]" correlationId="#[correlationId]">
+			<blackboard:users_-_update_user--body><![CDATA[#[payload]]]></blackboard:users_-_update_user--body>
 		</blackboard:update-user>
+			</when>
+			<otherwise >
+				<blackboard:update-user doc:name="Users - Update User" doc:id="2b92f998-d73b-4697-a104-2c39e96642ff" config-ref="Blackboard_config" userId="#[vars.userId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:users_-_update_user--body><![CDATA[#[payload]]]></blackboard:users_-_update_user--body>
+		</blackboard:update-user>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="patch:\v3\courses\(courseId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="e6d3d9cb-720e-4dc8-9025-b3417610907f" config-ref="HTTP_Listener_config" path="/v3/courses/{courseId}" allowedMethods="PATCH" >
@@ -322,24 +362,38 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="a76e71bd-a738-4613-bf8d-91e9e6afe144" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:update-course doc:name="Courses - Update Course" doc:id="52863315-7ed5-4645-906d-f419f79f7d2c" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]">
-			<blackboard:courses_-_update_course--body ><![CDATA[#[payload]]]></blackboard:courses_-_update_course--body>
+		<choice doc:name="Choice" doc:id="21d74722-ed0f-46db-b3ca-397e6cec76f6" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:update-course doc:name="Courses - Update Course" doc:id="52863315-7ed5-4645-906d-f419f79f7d2c" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]">
+			<blackboard:courses_-_update_course--body><![CDATA[#[payload]]]></blackboard:courses_-_update_course--body>
 		</blackboard:update-course>
+			</when>
+			<otherwise >
+				<blackboard:update-course doc:name="Courses - Update Course" doc:id="50a50c1e-b4b1-4dd7-85d1-6e53919efb2e" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:courses_-_update_course--body><![CDATA[#[payload]]]></blackboard:courses_-_update_course--body>
+		</blackboard:update-course>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\calendars\items:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="1beadcf8-cd9f-4c44-a8a9-fa5d0dea20eb" config-ref="HTTP_Listener_config" path="/v1/calendars/items" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="blackboard-token-subFlow" doc:id="553d5e73-e256-4e31-be30-a77944c8808e" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:upcoming-events doc:name="Users - Upcoming events" doc:id="61f3d51a-24e6-4feb-9592-0f6d7d3aab7c" config-ref="Blackboard_config" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="cc68c94f-8772-407c-a7f4-34ea2292606b" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:upcoming-events doc:name="Users - Upcoming events" doc:id="61f3d51a-24e6-4feb-9592-0f6d7d3aab7c" config-ref="Blackboard_config" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:upcoming-events doc:name="Users - Upcoming events" doc:id="428c41e3-ea7a-4d72-807a-25338fe3b4c6" config-ref="Blackboard_config" correlationId="#[correlationId]" courseId='#[attributes.queryParams.courseId default ""]' type="#[attributes.queryParams.'type' default &quot;&quot;]" since='#[attributes.queryParams.since default ""]' until='#[attributes.queryParams.until default ""]' offset='#[attributes.queryParams.offset default ""]' includePermissions="#[!isEmpty(attributes.queryParams.includePermissions)]" limit='#[attributes.queryParams.limit default ""]' sort='#[attributes.queryParams.sort default ""]' fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     
 </flow>
     <flow name="get:\v1\catalog\categories\(categoryType):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="df534d75-3a6d-42f2-b645-cba43e19c997" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -367,7 +421,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="73a7e717-8cfd-4d7f-bf12-08ef4e74e5c4" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-category doc:name="Course Category - Get Category" doc:id="9c81fe4c-5286-4f47-9ce1-3cb96736a7dc" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="a04a5ee3-9c96-4b29-965b-a1d8e402bfce" >
+			<when expression="#[isEmpty(attributes.queryParams.fields)]">
+				<blackboard:get-category-by-id doc:name="Course Category - Get Category By ID" doc:id="a8f0a62c-d40e-4050-a00c-687ec9694db1" categoryType="#[vars.categoryType]" config-ref="Blackboard_config" categoryId="#[vars.categoryId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-category-by-id doc:name="Course Category - Get Category By ID" doc:id="3943bc2d-61dd-4360-9f03-103e96030488" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     
 </flow>
     <flow name="get:\v1\catalog\categories\(categoryType)\(categoryId)\courses:blackboard-rest-api-config">
@@ -384,12 +445,18 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="7cff56fb-839f-42d9-a465-4900a6bb5029" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-category-memberships doc:name="Course Category - Get Category Memberships" doc:id="832bc904-cb19-4784-bb92-e760e153dcd4" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="ad374e9d-1d02-4074-9123-c4dc68326b2a" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-category-memberships doc:name="Course Category - Get Category Memberships" doc:id="832bc904-cb19-4784-bb92-e760e153dcd4" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-category-memberships doc:name="Course Category - Get Category Memberships" doc:id="d15b19e0-cd1d-43a0-b2d9-d9665081a61c" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" correlationId="#[correlationId]" includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" expand='#[attributes.queryParams.expand default ""]' offset='#[attributes.queryParams.offset default ""]' fields='#[attributes.queryParams.fields default ""]' limit='#[attributes.queryParams.limit default ""]'/>
+			</otherwise>
+		</choice>
     
 </flow>
     <flow name="get:\v1\catalog\categories\(categoryType)\(parentId)\children:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="7aa6a57f-19a8-444c-a2d1-f4c59fe8d09e" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{parentId}/children" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -401,23 +468,35 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="0ddfaa61-48f4-4b15-b818-13535b5c34c0" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-child-categories doc:name="Course Category - Get Child Categories" doc:id="c0641efd-f8d8-48ff-add0-b6a40fa089a7" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" parentId="#[vars.parentId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="458b1a4a-665c-4ba9-9518-58a73b269087" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-child-categories doc:name="Course Category - Get Child Categories" doc:id="c0641efd-f8d8-48ff-add0-b6a40fa089a7" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" parentId="#[vars.parentId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-child-categories doc:name="Course Category - Get Child Categories" doc:id="7461af71-3bea-41f1-b08c-7504b420e658" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" parentId="#[vars.parentId]" correlationId="#[correlationId]" categoryId='#[attributes.queryParams.categoryId default ""]' dataSourceId='#[attributes.queryParams.dataSourceId default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" createdCompare='#[attributes.queryParams.createdCompare default ""]' offset='#[attributes.queryParams.offset default ""]' frontPage="#[isEmpty(attributes.queryParams.frontPage)]" fields='#[attributes.queryParams.fields default ""]' available="#[isEmpty(attributes.queryParams.available)]" title='#[attributes.queryParams.title default ""]' sort='#[attributes.queryParams.sort default ""]' limit='#[attributes.queryParams.limit default ""]' created='#[attributes.queryParams.created default ""]'/>
+			</otherwise>
+		</choice>
     
 </flow>
     <flow name="get:\v1\courseRoles:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="d6da56eb-9e64-42f1-b2ba-231b09c85e78" config-ref="HTTP_Listener_config" path="/v1/courseRoles" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="blackboard-token-subFlow" doc:id="fcf52236-1ac1-425a-8ffa-c2cc94a22763" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-course-roles doc:name="Roles - Get Course Roles" doc:id="b396476e-828b-4e7a-9726-edcc6c178c53" config-ref="Blackboard_config" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="cfaef9de-3461-4e81-8c36-d41fb8626030" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-course-roles doc:name="Roles - Get Course Roles" doc:id="b396476e-828b-4e7a-9726-edcc6c178c53" config-ref="Blackboard_config" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-course-roles doc:name="Roles - Get Course Roles" doc:id="ac6ac42d-c01a-41b8-9819-2b45e3a2ce27" config-ref="Blackboard_config" correlationId="#[correlationId]" offset='#[attributes.queryParams.offset default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" limit='#[attributes.queryParams.limit default ""]' sort='#[attributes.queryParams.sort default ""]' custom="#[isEmpty(attributes.queryParams.custom)]" roleId='#[attributes.queryParams.roleId default ""]' fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     
 </flow>
     <flow name="get:\v1\courseRoles\(roleId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="4d695cf3-7608-498e-a246-e0ff60b2255b" config-ref="HTTP_Listener_config" path="/v1/courseRoles/{roleId}" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -428,12 +507,18 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="3ff5104b-923c-4092-a3ca-4bc2c001ba24" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-course-role doc:name="Roles - Get Course Role" doc:id="2805fb05-7005-4915-8a87-188f27b048d5" config-ref="Blackboard_config" roleId="#[vars.roleId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="50ea3b5b-127c-4397-acc3-a1858baed126" >
+			<when expression="#[isEmpty(attributes.queryParams.fields)]">
+				<blackboard:get-course-role doc:name="Roles - Get Course Role" doc:id="2805fb05-7005-4915-8a87-188f27b048d5" config-ref="Blackboard_config" roleId="#[vars.roleId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-course-role doc:name="Roles - Get Course Role" doc:id="68fa940f-fc11-47da-b8df-5b54e63e4106" config-ref="Blackboard_config" roleId="#[vars.roleId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     
 </flow>
     <flow name="get:\v1\courses\(courseId)\children:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="0c024973-8b7b-454a-9712-646fdd7e7fdd" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/children" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -444,12 +529,18 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="3acbba0e-1b2a-466e-bc9f-8fee068eb150" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:getcourse-children doc:name="Courses - Get Course Children" doc:id="a5342a2e-0e8d-4590-bc0e-79896a2f221f" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="c63b7cc0-d3a1-44a2-86e4-06226919b22f" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:getcourse-children doc:name="Courses - Get Course Children" doc:id="a5342a2e-0e8d-4590-bc0e-79896a2f221f" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:getcourse-children doc:name="Courses - Get Course Children" doc:id="c89e4cce-e8c7-40e8-a93d-50e31f947fe4" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" expand='#[attributes.queryParams.expand default ""]' offset='#[attributes.queryParams.offset default ""]' fields='#[attributes.queryParams.fields default ""]' limit='#[attributes.queryParams.limit default ""]'/>
+			</otherwise>
+		</choice>
     
 </flow>
     <flow name="get:\v1\courses\(courseId)\children\(childCourseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="05d39244-dbac-4f34-a82d-7ebc02187032" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/children/{childCourseId}" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -476,11 +567,17 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="6f2fa8ba-b055-4e4e-8882-43648227df94" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-gradebook-categories doc:name="Course Gradebook - Get Gradebook Categories" doc:id="5589d2fa-56b0-4050-824f-948be6c86f9a" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="fbaf2c81-520f-4a3c-881c-b35e9607823b" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-gradebook-categories doc:name="Course Gradebook - Get Gradebook Categories" doc:id="5589d2fa-56b0-4050-824f-948be6c86f9a" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-gradebook-categories doc:name="Course Gradebook - Get Gradebook Categories" doc:id="72b0c1d3-5819-43a4-b671-5e63b756a5d0" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" offset='#[attributes.queryParams.offset default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" limit='#[attributes.queryParams.limit default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\courses\(courseId)\meetings:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="bbb26797-e757-40fe-a505-6c18ec003388" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -491,7 +588,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="adc625e0-8f78-4ade-947f-6cc9dbed7b4f" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-course-meeting doc:name="Attendance - Get Course Meeting" doc:id="f2230bba-50c5-44ff-b4de-12a6bae0395d" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="ebe8a726-5283-4597-aff6-517ab1e59fc7" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-course-meeting doc:name="Attendance - Get Course Meeting" doc:id="f2230bba-50c5-44ff-b4de-12a6bae0395d" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-course-meeting doc:name="Attendance - Get Course Meeting" doc:id="36a434a7-24c0-4e57-95a4-f265f174d6d9" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" offset='#[attributes.queryParams.offset default ""]' fields='#[attributes.queryParams.fields default ""]' sort='#[attributes.queryParams.sort default ""]' limit='#[attributes.queryParams.limit default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\courses\(courseId)\meetings\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="95630498-c44a-4009-95ac-061ea87cb892" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/users/{userId}" allowedMethods="GET" >
@@ -507,7 +611,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="28386f24-b753-4b02-8516-3e5caadcb8e4" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-attendance-by-user-id doc:name="Attendance - Get Attendance by User Id" doc:id="80d39840-0c3c-47d7-af44-7caf37cb5d91" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="a629eea2-46cb-4711-97a2-f33de2431083" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-attendance-by-user-id doc:name="Attendance - Get Attendance by User Id" doc:id="80d39840-0c3c-47d7-af44-7caf37cb5d91" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-attendance-by-user-id doc:name="Attendance - Get Attendance by User Id" doc:id="8d1ed67e-fee3-410a-945b-63079adf18a9" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]" includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" offset='#[attributes.queryParams.offset default ""]' fields='#[attributes.queryParams.fields default ""]' sort='#[attributes.queryParams.sort default ""]' limit='#[attributes.queryParams.limit default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\courses\(courseId)\meetings\(meetingId)\users:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="7beaea58-66d8-47ac-8a81-8cb6c6212790" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/{meetingId}/users" allowedMethods="GET" >
@@ -523,7 +634,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="cf7b03e7-b6e7-484b-a826-b520e7209744" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-attendance-recordsby-meeting-id doc:name="Attendance - Get Attendance Records by Meeting Id" doc:id="0ad5fd58-9468-4ef6-9cdc-25c610303255" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="eece48a4-b10b-4521-b5d4-6cfed06eb1c7" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-attendance-recordsby-meeting-id doc:name="Attendance - Get Attendance Records by Meeting Id" doc:id="0ad5fd58-9468-4ef6-9cdc-25c610303255" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-attendance-recordsby-meeting-id doc:name="Attendance - Get Attendance Records by Meeting Id" doc:id="794845a0-9ee4-4116-a02e-1c987533db8a" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" correlationId="#[correlationId]" includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" offset='#[attributes.queryParams.offset default ""]' fields='#[attributes.queryParams.fields default ""]' sort='#[attributes.queryParams.sort default ""]' limit='#[attributes.queryParams.limit default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\courses\(courseId)\meetings\(meetingId)\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="4611ed4b-80dd-4397-9872-1232da029c81" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/{meetingId}/users" allowedMethods="GET" >
@@ -544,7 +662,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="get:\v1\courses\(courseId)\users:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="6fa379ec-bc65-4309-abb9-1085cb506887" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -555,7 +672,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="e1d81b89-934b-479b-a51e-d1738f7b7bb2" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-course-memberships doc:name="Course Membership - Get Course Memberships" doc:id="8a67bafb-882e-4ba4-b98c-aea69173e0c8" config-ref="Blackboard_config" courseId="#[vars.courseId]"/>
+		<choice doc:name="Choice" doc:id="de279000-d6ee-47a5-b8dd-44440d94f1e0" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-course-memberships doc:name="Course Membership - Get Course Memberships" doc:id="8a67bafb-882e-4ba4-b98c-aea69173e0c8" config-ref="Blackboard_config" courseId="#[vars.courseId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-course-memberships doc:name="Course Membership - Get Course Memberships" doc:id="457aeed8-22ac-4188-9f2c-a0cb1aa584b3" config-ref="Blackboard_config" courseId="#[vars.courseId]" lastAccessed='#[attributes.queryParams.lastAccessed default ""]' availability_available='#[attributes.queryParams.availabilty.available default ""]' role='#[attributes.queryParams.role default ""]' dataSourceId='#[attributes.queryParams.dataSourceId default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" createdCompare='#[attributes.queryParams.createdCompare default ""]' modifiedCompare='#[attributes.queryParams.modifiedCompare default ""]' lastAccessedCompare='#[attributes.queryParams.lastAccessedCompare default ""]' expand='#[attributes.queryParams.expand default ""]' modified='#[attributes.queryParams.modified default ""]' offset='#[attributes.queryParams.offset default ""]' fields='#[attributes.queryParams.fields default ""]' sort='#[attributes.queryParams.sort default ""]' limit='#[attributes.queryParams.limit default ""]' created='#[attributes.queryParams.created default ""]' correlationId="#[correlationId]"/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\courses\(courseId)\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="192cf561-2439-4f17-bc67-2b4ec09057cc" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users/{userId}" allowedMethods="GET" >
@@ -571,7 +695,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="9bec45c0-4b8f-4b90-a5b3-1ff7673ea59e" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-course-membership doc:name="Course Membership - Get Course Membership" doc:id="d5ee1c96-96f4-4b05-9603-03a99ee09d35" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="7ddde78d-adf4-4267-8f04-823d59794f32" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-course-membership doc:name="Course Membership - Get Course Membership" doc:id="d5ee1c96-96f4-4b05-9603-03a99ee09d35" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-course-membership doc:name="Course Membership - Get Course Membership" doc:id="74b44ac8-7f95-45ee-a6a8-92a79f518834" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]' expand='#[attributes.queryParams.expand default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\institutionRoles:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="78e892b3-5fb5-41a0-b263-e7bb855373cd" config-ref="HTTP_Listener_config" path="/v1/institutionRoles" allowedMethods="GET" >
@@ -581,11 +712,17 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="blackboard-token-subFlow" doc:id="61f06e09-c76b-4fa7-a839-fbc5899f07d8" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-institution-roles doc:name="Roles - Get Institution Roles" doc:id="98b2d731-12a7-46c0-bdac-12252ea74885" config-ref="Blackboard_config" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="aa29aded-1f58-407a-a348-bb868e37ff19" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-institution-roles doc:name="Roles - Get Institution Roles" doc:id="98b2d731-12a7-46c0-bdac-12252ea74885" config-ref="Blackboard_config" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-institution-roles doc:name="Roles - Get Institution Roles" doc:id="daa9f8c6-91b4-4e70-8150-6626e45baf12" config-ref="Blackboard_config" correlationId="#[correlationId]" offset='#[attributes.queryParams.offset default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" limit='#[attributes.queryParams.limit default ""]' sort='#[attributes.queryParams.sort default ""]' custom="#[isEmpty(attributes.queryParams.custom)]" roleId='#[attributes.queryParams.roleId default ""]' fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\institutionRoles\(roleId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="0d6f24e8-c53d-49e3-bc3e-498492fd1993" config-ref="HTTP_Listener_config" path="/v1/institutionRoles/{roleId}" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -596,11 +733,17 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="0aaacb38-7d21-4f28-b475-da44d40599e6" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-institution-role doc:name="Roles - Get Institution Role" doc:id="5fc62690-f115-4964-9325-3faee1d055a4" config-ref="Blackboard_config" roleId="#[vars.roleId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="110af55a-5078-44c6-91e3-ee827a57683e" >
+			<when expression="#[isEmpty(attributes.queryParams.fields)]">
+				<blackboard:get-institution-role doc:name="Roles - Get Institution Role" doc:id="5fc62690-f115-4964-9325-3faee1d055a4" config-ref="Blackboard_config" roleId="#[vars.roleId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-institution-role doc:name="Roles - Get Institution Role" doc:id="7eb5c22f-3f65-4b87-a501-c10b0ae01a95" config-ref="Blackboard_config" roleId="#[vars.roleId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\terms:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="4b0367fa-4137-4a3b-8051-979522ed1501" config-ref="HTTP_Listener_config" path="/v1/terms" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -610,7 +753,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="get:\v1\terms\(termId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="40783e5b-97e1-47cb-9afe-9e758fb10dca" config-ref="HTTP_Listener_config" path="/v1/terms/{termId}" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -621,7 +763,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="afa492de-5884-404b-bc0c-cf1dfa0702fa" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-term doc:name="Terms - Get Term" doc:id="bbde300b-c2bc-424d-9668-292f4dd40fdf" config-ref="Blackboard_config" termId="#[vars.termId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="eebbdf21-a8ea-41cc-96bb-b22549bdf998" >
+			<when expression="#[isEmpty(attributes.queryParams.fields)]">
+				<blackboard:get-term doc:name="Terms - Get Term" doc:id="bbde300b-c2bc-424d-9668-292f4dd40fdf" config-ref="Blackboard_config" termId="#[vars.termId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-term doc:name="Terms - Get Term" doc:id="3f232aa2-dad8-4951-946a-3c6352470e32" config-ref="Blackboard_config" termId="#[vars.termId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\users:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="dacf59a4-f45e-40db-9715-605c5cfd4e8e" config-ref="HTTP_Listener_config" path="/v1/users" allowedMethods="GET" >
@@ -635,7 +784,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="get:\v1\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="b8793274-2129-4d4e-a7c0-63eb4df98880" config-ref="HTTP_Listener_config" path="/v1/users/{userId}" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -646,11 +794,17 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="d84a6828-ba96-4a8d-ad0d-d2830ac00922" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-user doc:name="Users - Get User" doc:id="e1127f48-6f08-4542-8407-3b72344e92f9" config-ref="Blackboard_config" userId="#[vars.userId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="f4db3f2d-6990-40ea-ad14-fb6b0657149b" >
+			<when expression="#[isEmpty(attributes.queryParams.fields)]">
+				<blackboard:get-user doc:name="Users - Get User" doc:id="e1127f48-6f08-4542-8407-3b72344e92f9" config-ref="Blackboard_config" userId="#[vars.userId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-user doc:name="Users - Get User" doc:id="84c00643-17f2-4c9f-97d3-e73b203c3056" config-ref="Blackboard_config" userId="#[vars.userId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\users\(userId)\courses:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="aa79fe41-b2dd-4a4f-9bb9-fb892c68ffe9" config-ref="HTTP_Listener_config" path="/v1/users/{userId}/courses" allowedMethods="GET" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -661,7 +815,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="50e25299-83cf-4921-9483-4cfbaaea545f" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-user-memberships doc:name="Course Membership - Get User Memberships" doc:id="704f2cd1-b3ff-4d10-ae5d-ff8fb00e804f" config-ref="Blackboard_config" userId="#[vars.userId]"/>
+		<choice doc:name="Choice" doc:id="f3ef3150-3ff3-4399-b0d9-08de09790b83" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-user-memberships doc:name="Course Membership - Get User Memberships" doc:id="704f2cd1-b3ff-4d10-ae5d-ff8fb00e804f" config-ref="Blackboard_config" userId="#[vars.userId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-user-memberships doc:name="Course Membership - Get User Memberships" doc:id="032f48c5-7bba-41b4-aa2f-ee1ee2de45ba" config-ref="Blackboard_config" userId="#[vars.userId]" lastAccessed='#[attributes.queryParams.lastAccessed default ""]' availability_available='#[attributes.queryParams.availability.available default ""]' role='#[attributes.queryParams.role default ""]' dataSourceId='#[attributes.queryParams.dataSourceId default ""]' createdCompare='#[attributes.queryParams.createdCompare default ""]' modifiedCompare='#[attributes.queryParams.modifiedCompare default ""]' lastAccessedCompare='#[attributes.queryParams.lastAccessedCompare default ""]' expand='#[attributes.queryParams.expand default ""]' modified='#[attributes.queryParams.modified default ""]' offset='#[attributes.queryParams.offset default ""]' fields='#[attributes.queryParams.fields default ""]' sort='#[attributes.queryParams.sort default ""]' limit='#[attributes.queryParams.limit default ""]' created='#[attributes.queryParams.created default ""]' correlationId="#[correlationId]" includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]"/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v2\courses\(courseId)\gradebook\columns:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="6ac18e8c-3b26-4dc9-8bc1-4ba94e51f7db" config-ref="HTTP_Listener_config" path="/v2/courses/{courseId}/gradebook/columns" allowedMethods="GET" >
@@ -676,7 +837,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="8491b8fb-f08b-4dc8-ae0e-bd4d302ddeee" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-grade-columns doc:name="Course Gradebook - Get Grade Columns" doc:id="730378b5-5d23-40a4-8c16-66c0c5fcbc93" config-ref="Blackboard_config" courseId="#[vars.courseId]"/>
+		<choice doc:name="Choice" doc:id="9281a255-4003-46e7-a677-85576e7a0061" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-grade-columns doc:name="Course Gradebook - Get Grade Columns" doc:id="730378b5-5d23-40a4-8c16-66c0c5fcbc93" config-ref="Blackboard_config" courseId="#[vars.courseId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-grade-columns doc:name="Course Gradebook - Get Grade Columns" doc:id="fea5c5aa-37db-4e15-a379-1245539a33f0" config-ref="Blackboard_config" courseId="#[vars.courseId]" displayName='#[attributes.queryParams.displayName default ""]' name='#[attributes.queryParams.name default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" createdCompare='#[attributes.queryParams.createdCompare default ""]' modifiedCompare='#[attributes.queryParams.modifiedCompare default ""]' expand='#[attributes.queryParams.expand default ""]' modified='#[attributes.queryParams.modified default ""]' offset='#[attributes.queryParams.offset default ""]' fields='#[attributes.queryParams.fields default ""]' contentId='#[attributes.queryParams.contentId default ""]' limit='#[attributes.queryParams.limit default ""]' created='#[attributes.queryParams.created default ""]' correlationId="#[correlationId]"/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v2\courses\(courseId)\gradebook\columns\(columnId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="e6718f1e-fe78-4f27-9335-485a3c51a77e" config-ref="HTTP_Listener_config" path="/v2/courses/{courseId}/gradebook/columns/{columnId}" allowedMethods="GET" >
@@ -692,7 +860,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="cadf6e08-a66d-46d3-9034-a3d815a4c3fd" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-grade-column doc:name="Course Gradebook - Get Grade Column" doc:id="fd905387-ee12-4e7b-9286-54036ed0e47c" config-ref="Blackboard_config" courseId="#[vars.courseId]" columnId="#[vars.columnId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="0f9e3ba7-4188-4557-9800-aeec26ac2c5e" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-grade-column doc:name="Course Gradebook - Get Grade Column" doc:id="fd905387-ee12-4e7b-9286-54036ed0e47c" config-ref="Blackboard_config" courseId="#[vars.courseId]" columnId="#[vars.columnId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-grade-column doc:name="Course Gradebook - Get Grade Column" doc:id="3d74837c-943c-4966-ae8f-7d2ea90eef26" config-ref="Blackboard_config" courseId="#[vars.courseId]" columnId="#[vars.columnId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]' expand='#[attributes.queryParams.expand default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v2\courses\(courseId)\gradebook\columns\(columnId)\users:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="f968bad3-13fa-4e7a-b441-fef6163ea2b7" config-ref="HTTP_Listener_config" path="/v2/courses/{courseId}/gradebook/columns/{columnId}/users" allowedMethods="GET" >
@@ -708,7 +883,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="77922417-d8bc-440f-8e22-45f35f27aeb0" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-column-grades doc:name="Course Gradebook - Get Column Grades" doc:id="e3a4ea94-7bdc-4967-b8a2-c926fafd7a0a" config-ref="Blackboard_config" courseId="#[vars.courseId]" columnId="#[vars.columnId]"/>
+		<choice doc:name="Choice" doc:id="055b0706-10b3-4b4a-9365-776b5dd0e5b6" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-column-grades doc:name="Course Gradebook - Get Column Grades" doc:id="e3a4ea94-7bdc-4967-b8a2-c926fafd7a0a" config-ref="Blackboard_config" courseId="#[vars.courseId]" columnId="#[vars.columnId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-column-grades doc:name="Course Gradebook - Get Column Grades" doc:id="57de8ddb-c0e8-494a-8647-9d02075428f4" config-ref="Blackboard_config" courseId="#[vars.courseId]" columnId="#[vars.columnId]" firstRelevantDateCompare='#[attributes.queryParams.firstRelevantDateCompare default ""]' lastRelevantDate='#[attributes.queryParams.lastRelevantDate default ""]' changeIndex='#[attributes.queryParams.changeIndex default ""]' includeUnpostedGrades="#[isEmpty(attributes.queryParams.includeUnspstedGrades)]" firstRelevantDate='#[attributes.queryParams.firstRelevantDate default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" includeDisabledMemberships="#[isEmpty(attributes.queryParams.includeDisabledMemberships)]" offset='#[attributes.queryParams.offset default ""]' lastRelevantDateCompare='#[attributes.queryParams.lastRelevantDateCompare default ""]' fields='#[attributes.queryParams.fields default ""]' unsupportedSearchOverChildCourses="#[isEmpty(attributes.queryParams.unsupportedSearchoverChildCourses)]" limit='#[attributes.queryParams.limit default ""]' correlationId="#[correlationId]"/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v2\courses\(courseId)\gradebook\columns\(columnId)\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="94312961-d094-4f87-8c2e-0b4177509240" config-ref="HTTP_Listener_config" path="/v2/courses/{courseId}/gradebook/columns/{columnId}/users/{userId}" allowedMethods="GET" >
@@ -725,7 +907,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="4b924d08-ba60-48c4-9b32-ff607cd29101" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-column-grade doc:name="Course Gradebook - Get Column Grade" doc:id="79cf87f9-cceb-40bd-8ae0-ba3fcdc06199" config-ref="Blackboard_config" courseId="#[vars.courseId]" columnId="#[vars.columnId]" userId="#[vars.userId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="5e3c77ec-e393-4d56-a07c-748d92e6ec4e" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-column-grade doc:name="Course Gradebook - Get Column Grade" doc:id="79cf87f9-cceb-40bd-8ae0-ba3fcdc06199" config-ref="Blackboard_config" courseId="#[vars.courseId]" columnId="#[vars.columnId]" userId="#[vars.userId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-column-grade doc:name="Course Gradebook - Get Column Grade" doc:id="64c40540-ac36-470d-b581-72691e62933e" config-ref="Blackboard_config" courseId="#[vars.courseId]" columnId="#[vars.columnId]" userId="#[vars.userId]" correlationId="#[correlationId]" unsupportedSearchOverChildCourses="#[isEmpty(attributes.queryParams.unsupportedSearchOverChildCourse)]" fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v2\courses\(courseId)\gradebook\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="e7dd76b2-095e-4224-83aa-7d5eb8340f78" config-ref="HTTP_Listener_config" path="/v2/courses/{courseId}/gradebook/users/{userId}" allowedMethods="GET" >
@@ -741,7 +930,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="22591549-2d36-4985-95ac-2b842ab673de" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-user-grades doc:name="Course Gradebook - Get User Grades" doc:id="f572cd56-a517-4471-9b80-bcfdbcea68ae" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]"/>
+		<choice doc:name="Choice" doc:id="001db372-b550-4ba6-9862-23a7006c20dd" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-user-grades doc:name="Course Gradebook - Get User Grades" doc:id="f572cd56-a517-4471-9b80-bcfdbcea68ae" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-user-grades doc:name="Course Gradebook - Get User Grades" doc:id="d01ffa79-5a7c-48b7-85a8-3d123e1579da" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" firstRelevantDateCompare='#[attributes.queryParams.firstRelevantDateCompare default ""]' lastRelevantDate='#[attributes.queryParams.lastRelevantDate default ""]' firstRelevantDate='#[attributes.queryParams.firstRelevantDate default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" offset='#[attributes.queryParams.offset default ""]' lastRelevantDateCompare='#[attributes.queryParams.lastRelevantDateCompare default ""]' fields='#[attributes.queryParams.fields default ""]' limit='#[attributes.queryParams.limit default ""]' correlationId="#[correlationId]"/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v3\courses:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="32701bd6-51e1-4f23-8967-7e5944b32738" config-ref="HTTP_Listener_config" path="/v3/courses" allowedMethods="GET" >
@@ -767,7 +963,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="9963bca7-b3f4-4d32-88e1-d052599ef3d0" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-course doc:name="Courses - Get Course" doc:id="de65660e-05c6-48c0-82a7-5938832b4d9f" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="163ef0af-9517-40df-9713-aeff420dc06d" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-course doc:name="Courses - Get Course" doc:id="de65660e-05c6-48c0-82a7-5938832b4d9f" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<blackboard:get-course doc:name="Courses - Get Course" doc:id="e258e0af-3cb0-4a4c-bcdf-c0d32519e812" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="post:\oauth2\token:application\x-www-form-urlencoded:blackboard-rest-api-config">
         <ee:transform doc:name="Transform Message">
@@ -797,9 +1000,18 @@ output application/json
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="cbae845a-5f85-48f7-8823-e7453aa43c03" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:create-category doc:name="Course Category - Create Category" doc:id="c5fce548-de35-4f88-b64e-39dc93f8c3b5" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" correlationId="#[correlationId]">
-			<blackboard:course_category_-_create_category--body ><![CDATA[#[payload]]]></blackboard:course_category_-_create_category--body>
+		<choice doc:name="Choice" doc:id="ecbd6319-0943-477e-bd68-8dab9f9f0e36" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:create-category doc:name="Course Category - Create Category" doc:id="c5fce548-de35-4f88-b64e-39dc93f8c3b5" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" correlationId="#[correlationId]">
+			<blackboard:course_category_-_create_category--body><![CDATA[#[payload]]]></blackboard:course_category_-_create_category--body>
 		</blackboard:create-category>
+			</when>
+			<otherwise >
+				<blackboard:create-category doc:name="Course Category - Create Category" doc:id="1abf731f-3a13-4893-8662-6bb9cc063c7a" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:course_category_-_create_category--body><![CDATA[#[payload]]]></blackboard:course_category_-_create_category--body>
+		</blackboard:create-category>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="post:\v1\courses\(courseId)\meetings\(meetingId)\users:application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="a43c1753-d524-4efa-b3c4-2d9c380a3084" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/{meetingId}/users" allowedMethods="POST" >
@@ -815,9 +1027,18 @@ output application/json
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="7952c40d-f78b-4510-806a-665fe5f687dc" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:create-attendance-record doc:name="Attendance - Create Attendance Record" doc:id="6d46df21-38cb-48cd-b49f-65d9afcb1486" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" correlationId="#[correlationId]">
-			<blackboard:attendance_-_create_attendance_record--body ><![CDATA[#[payload]]]></blackboard:attendance_-_create_attendance_record--body>
+		<choice doc:name="Choice" doc:id="a823a10d-1fd7-412b-84fb-4cb46badd87d" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:create-attendance-record doc:name="Attendance - Create Attendance Record" doc:id="6d46df21-38cb-48cd-b49f-65d9afcb1486" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" correlationId="#[correlationId]">
+			<blackboard:attendance_-_create_attendance_record--body><![CDATA[#[payload]]]></blackboard:attendance_-_create_attendance_record--body>
 		</blackboard:create-attendance-record>
+			</when>
+			<otherwise >
+				<blackboard:create-attendance-record doc:name="Attendance - Create Attendance Record" doc:id="3c4afebf-d4f8-44c1-a9fc-677c9d7278f9" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:attendance_-_create_attendance_record--body><![CDATA[#[payload]]]></blackboard:attendance_-_create_attendance_record--body>
+		</blackboard:create-attendance-record>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="post:\v1\courses\(courseId)\meetings:application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="415e0892-2ef7-4e94-8b6e-c6c45a118b36" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings" allowedMethods="POST" >
@@ -832,9 +1053,18 @@ output application/json
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="be904812-36c3-42f2-99aa-258292fd16a5" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:create-course-meeting doc:name="Attendance - Create Course Meeting" doc:id="0ad7e349-dd30-43ac-8371-b00d717b64d8" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]">
-			<blackboard:attendance_-_create_course_meeting--body ><![CDATA[#[payload]]]></blackboard:attendance_-_create_course_meeting--body>
+		<choice doc:name="Choice" doc:id="10b5a089-8956-445d-85c9-b4e176776e14" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:create-course-meeting doc:name="Attendance - Create Course Meeting" doc:id="0ad7e349-dd30-43ac-8371-b00d717b64d8" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]">
+			<blackboard:attendance_-_create_course_meeting--body><![CDATA[#[payload]]]></blackboard:attendance_-_create_course_meeting--body>
 		</blackboard:create-course-meeting>
+			</when>
+			<otherwise >
+				<blackboard:create-course-meeting doc:name="Attendance - Create Course Meeting" doc:id="deb401e3-4402-4745-b32a-e7b6e2ca6712" config-ref="Blackboard_config" courseId="#[vars.courseId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:attendance_-_create_course_meeting--body><![CDATA[#[payload]]]></blackboard:attendance_-_create_course_meeting--body>
+		</blackboard:create-course-meeting>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="post:\v1\terms:application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="c3bc1b40-3fb1-4fb8-9df4-b064b01b5b0e" config-ref="HTTP_Listener_config" path="/v1/terms" allowedMethods="POST" >
@@ -844,21 +1074,38 @@ output application/json
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="blackboard-token-subFlow" doc:id="49712df4-4aa8-4523-8b87-0aaaf15a70ff" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:create-term doc:name="Terms - Create Term" doc:id="428e11fc-039f-4476-8b8e-3b95348e92cf" config-ref="Blackboard_config" correlationId="#[correlationId]">
-			<blackboard:terms_-_create_term--body ><![CDATA[#[payload]]]></blackboard:terms_-_create_term--body>
+		<choice doc:name="Choice" doc:id="9179dfcc-3add-43ab-a38e-d4cd13b13f86" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:create-term doc:name="Terms - Create Term" doc:id="428e11fc-039f-4476-8b8e-3b95348e92cf" config-ref="Blackboard_config" correlationId="#[correlationId]">
+			<blackboard:terms_-_create_term--body><![CDATA[#[payload]]]></blackboard:terms_-_create_term--body>
 		</blackboard:create-term>
+			</when>
+			<otherwise >
+				<blackboard:create-term doc:name="Terms - Create Term" doc:id="c18e0997-d6cf-4e5b-963b-c5c3355c87af" config-ref="Blackboard_config" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:terms_-_create_term--body><![CDATA[#[payload]]]></blackboard:terms_-_create_term--body>
+		</blackboard:create-term>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="post:\v1\users:application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="a16d9c60-2eae-444f-8113-f6db0c39c136" config-ref="HTTP_Listener_config" path="/v1/users" allowedMethods="POST" >
-			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="blackboard-token-subFlow" doc:id="b3accaf5-e422-4877-8b94-4fb8fd367eb3" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:create-user doc:name="Users - Create User" doc:id="c0efc5a6-48be-45cb-b5fd-5ca7ce7bc295" config-ref="Blackboard_config" correlationId="#[correlationId]">
-			<blackboard:users_-_create_user--body ><![CDATA[#[payload]]]></blackboard:users_-_create_user--body>
+		<choice doc:name="Choice" doc:id="a3f3ef2e-d89f-4246-b465-e44fa339d457">
+			<when expression="#[isEmpty(attributes.queryParams)]" >
+				<blackboard:create-user doc:name="Users - Create User" doc:id="c0efc5a6-48be-45cb-b5fd-5ca7ce7bc295" config-ref="Blackboard_config" correlationId="#[correlationId]">
+			<blackboard:users_-_create_user--body><![CDATA[#[payload]]]></blackboard:users_-_create_user--body>
 		</blackboard:create-user>
+			</when>
+			<otherwise >
+				<blackboard:create-user doc:name="Users - Create User" doc:id="493ef9c3-24cd-4e79-b694-7e7fbcf6ee57" config-ref="Blackboard_config" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:users_-_create_user--body><![CDATA[#[payload]]]></blackboard:users_-_create_user--body>
+		</blackboard:create-user>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="post:\v3\courses:application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="acc5d410-d0ad-4497-b8b2-10b8165ef16d" config-ref="HTTP_Listener_config" path="/v3/courses" allowedMethods="POST" >
@@ -868,9 +1115,18 @@ output application/json
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="blackboard-token-subFlow" doc:id="122ee0ff-e563-499d-95cf-1ab801ae9c31" name="accesstoken_Flow" target="blackboardToken"/>
-        <blackboard:create-course doc:name="Courses - Create Course" doc:id="f311166d-edc2-4e9e-9e3b-cac717abb070" config-ref="Blackboard_config" correlationId="#[correlationId]">
-			<blackboard:courses_-_create_course--body ><![CDATA[#[payload]]]></blackboard:courses_-_create_course--body>
+		<choice doc:name="Choice" doc:id="0823a913-3721-4026-bc76-59f74e05f1fc" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:create-course doc:name="Courses - Create Course" doc:id="f311166d-edc2-4e9e-9e3b-cac717abb070" config-ref="Blackboard_config" correlationId="#[correlationId]">
+			<blackboard:courses_-_create_course--body><![CDATA[#[payload]]]></blackboard:courses_-_create_course--body>
 		</blackboard:create-course>
+			</when>
+			<otherwise >
+				<blackboard:create-course doc:name="Courses - Create Course" doc:id="9d871c35-449b-4982-8efa-269f8af655d3" config-ref="Blackboard_config" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:courses_-_create_course--body><![CDATA[#[payload]]]></blackboard:courses_-_create_course--body>
+		</blackboard:create-course>
+			</otherwise>
+		</choice>
 		<logger level="INFO" doc:name="Logger" doc:id="0fe1e399-345b-4f80-a853-905d36fddb4f" />
     </flow>
     <flow name="patch:\v1\courses\(courseId)\meetings\(meetingId):application\json:blackboard-rest-api-config">
@@ -887,9 +1143,18 @@ output application/json
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="6519a84c-2de6-4ea3-b9e8-518f2c365f43" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:update-course-meeting doc:name="Attendance - Update Course Meeting" doc:id="ece60e96-2989-404c-a4c9-7e1607ee0b51" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" correlationId="#[correlationId]">
-			<blackboard:attendance_-_update_course_meeting--body ><![CDATA[#[payload]]]></blackboard:attendance_-_update_course_meeting--body>
+		<choice doc:name="Choice" doc:id="a1aa3c23-7de0-4a97-87c8-0829c83fd8a2">
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:update-course-meeting doc:name="Attendance - Update Course Meeting" doc:id="ece60e96-2989-404c-a4c9-7e1607ee0b51" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" correlationId="#[correlationId]">
+			<blackboard:attendance_-_update_course_meeting--body><![CDATA[#[payload]]]></blackboard:attendance_-_update_course_meeting--body>
 		</blackboard:update-course-meeting>
+			</when>
+			<otherwise >
+				<blackboard:update-course-meeting doc:name="Attendance - Update Course Meeting" doc:id="fe938043-9aa9-4dfa-81cc-d6534f22ccef" config-ref="Blackboard_config" courseId="#[vars.courseId]" meetingId="#[vars.meetingId]" correlationId="#[correlationId]" fields='#[attributes.queryParams.fields default ""]'>
+			<blackboard:attendance_-_update_course_meeting--body><![CDATA[#[payload]]]></blackboard:attendance_-_update_course_meeting--body>
+		</blackboard:update-course-meeting>
+			</otherwise>
+		</choice>
     </flow>
 	
 </mule>

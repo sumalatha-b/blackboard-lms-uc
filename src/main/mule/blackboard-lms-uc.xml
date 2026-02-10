@@ -35,6 +35,7 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="put:\v1\courses\(courseId)\children\(childCourseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="a81f6ad6-08c0-46f2-a12d-ac7f9c6352e4" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/children/{childCourseId}" allowedMethods="PUT" >
+			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -54,9 +55,11 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 				<blackboard:add-child-course doc:name="Courses - Add Child Course" doc:id="b8875993-6796-42e4-864a-2619e716adf7" config-ref="Blackboard_config" courseId="#[vars.courseId]" childCourseId="#[vars.childCourseId]" correlationId="#[correlationId]" ignoreEnrollmentErrors="#[isEmpty(attributes.queryParams.ignoreEmrollmentErrors)]" fields='#[attributes.queryParams.fields default ""]'/>
 			</otherwise>
 		</choice>
+		<set-variable value="#[attributes.statusCode]" doc:name="httpStatus" doc:id="838e81a9-1ce8-43f8-80cb-7ee07118306d" variableName="httpStatus" />
     </flow>
     <flow name="put:\v1\courses\(courseId)\users\(userId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="077041a8-53a2-4818-b80d-44a3d1bf8cf3" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users/{userId}" allowedMethods="PUT" >
+			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -80,6 +83,7 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 		</blackboard:create-course-user-membership>
 			</otherwise>
 		</choice>
+		<set-variable value="#[attributes.statusCode]" doc:name="httpStatus" doc:id="65fd2f24-df3e-45fa-a34d-6c4f30d5be70" variableName="httpStatus" />
     </flow>
     <flow name="delete:\v1\catalog\categories\(categoryType)\(categoryId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="9e882060-4c83-498c-8069-3a3cb262fad3" config-ref="HTTP_Listener_config" path="/v1/catalog/categories/{categoryType}/{categoryId}" allowedMethods="DELETE" >
@@ -113,10 +117,11 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="9cc0434b-7096-47ce-89f1-069e9795427a" name="accesstoken_Flow" target="blackboardToken"/>
 		<blackboard:delete-category-membership doc:name="Course Category - Delete Category Membership" doc:id="0394f037-db57-4504-a707-83bf2b45a2f3" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" categoryId="#[vars.categoryId]" courseId="#[vars.courseId]" correlationId="#[correlationId]"/>
-		<set-variable value="#[attributes.statusCode]" doc:name="httpStatus" doc:id="3ebe256e-ef7d-4978-a533-7066380314ef" variableName="httpStatus" />
+		<set-variable value="#[attributes.statusCode default 204]" doc:name="httpStatus" doc:id="3ebe256e-ef7d-4978-a533-7066380314ef" variableName="httpStatus" />
     </flow>
     <flow name="delete:\v1\courses\(courseId)\children\(childCourseId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="d4a63d99-eb69-4dda-9ea3-842dfbdde919" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/children/{childCourseId}" allowedMethods="DELETE" >
+			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -129,6 +134,7 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="2b2814f4-5e4a-4ec7-b065-d65c05c7bd55" name="accesstoken_Flow" target="blackboardToken"/>
 		<blackboard:remove-child-course doc:name="Courses - Remove Child Course" doc:id="3bbc74a4-4b1c-41b5-aeb5-88da85ce24f1" config-ref="Blackboard_config" courseId="#[vars.courseId]" childCourseId="#[vars.childCourseId]" correlationId="#[correlationId]"/>
+		<set-variable value="#[attributes.statusCode default 204]" doc:name="httpStatus" doc:id="67768d27-eb49-4ab5-ab77-71a20d041e83" variableName="httpStatus" />
     </flow>
     <flow name="delete:\v1\courses\(courseId)\meetings:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="2f7f6fc8-7640-4868-8e51-90b2c2d46aeb" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings" allowedMethods="DELETE" >
@@ -177,6 +183,7 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
     </flow>
     <flow name="delete:\v1\courses\(courseId)\users\(userId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="a12708d9-0cf6-4ef6-9d1c-e498fac8e5dc" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/users/{userId}" allowedMethods="DELETE" >
+			<http:response statusCode="#[vars.httpStatus default 200]" />
 			<http:error-response statusCode="#[vars.httpStatus default 500]" >
 				<http:body ><![CDATA[#[output application/json --- payload default error.description]]]></http:body>
 			</http:error-response>
@@ -189,6 +196,7 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="c436eb40-6d15-4203-a4bc-b99ceb72f146" name="accesstoken_Flow" target="blackboardToken"/>
 		<blackboard:delete-course-membership doc:name="Course Membership - Delete Course Membership" doc:id="2a7855a5-54ea-43c4-b14f-31154d5328cd" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]"/>
+		<set-variable value="#[attributes.statusCode default 204]" doc:name="httpStatus" doc:id="1792c623-7981-4577-abde-fcfb94696ae1" variableName="httpStatus" />
     </flow>
     <flow name="delete:\v1\terms\(termId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="c73c7b88-7e2e-41b9-b5ef-127d6ca7eb17" config-ref="HTTP_Listener_config" path="/v1/terms/{termId}" allowedMethods="DELETE" >
@@ -295,9 +303,19 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="cdd1c155-8e21-42c0-99b5-12405e7795cd" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:update-course-user-membership doc:name="Course Membership - Update Course User Membership" doc:id="f4bf651d-1995-4a46-af6f-27df720f3dde" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]">
-			<blackboard:course_membership_-_update_course_user_membership--body ><![CDATA[#[payload]]]></blackboard:course_membership_-_update_course_user_membership--body>
+		<choice doc:name="Choice" doc:id="9bfcea8b-dab4-4b35-b652-b9bcfa0582db" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:update-course-user-membership doc:name="Course Membership - Update Course User Membership" doc:id="2f099255-5154-4844-bfb1-47ccae4985da" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" correlationId="#[correlationId]">
+			<blackboard:course_membership_-_update_course_user_membership--body><![CDATA[#[payload]]]></blackboard:course_membership_-_update_course_user_membership--body>
 		</blackboard:update-course-user-membership>
+			</when>
+			<otherwise >
+				<blackboard:update-course-user-membership doc:name="Course Membership - Update Course User Membership" doc:id="5e903708-fe36-4828-b7e3-95a973a59ed1" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" fields="#[attributes.queryParams.fields]" correlationId="#[correlationId]">
+					<blackboard:course_membership_-_update_course_user_membership--body ><![CDATA[#[payload]]]></blackboard:course_membership_-_update_course_user_membership--body>
+				</blackboard:update-course-user-membership>
+			</otherwise>
+		</choice>
+		<set-variable value="#[attributes.statusCode]" doc:name="httpStatus" doc:id="e577272f-472a-4ac0-b846-c0a562aac739" variableName="httpStatus" />
     </flow>
     <flow name="patch:\v1\terms\(termId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="adf955e4-b358-4c7d-93e3-6380ab55dd4f" config-ref="HTTP_Listener_config" path="/v1/terms/{termId}" allowedMethods="PATCH" >
@@ -471,7 +489,7 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="0ddfaa61-48f4-4b15-b818-13535b5c34c0" name="accesstoken_Flow" target="blackboardToken"/>
 		<choice doc:name="Choice" doc:id="458b1a4a-665c-4ba9-9518-58a73b269087" >
 			<when expression="#[isEmpty(attributes.queryParams)]">
-				<blackboard:get-child-categories doc:name="Course Category - Get Child Categories" doc:id="c0641efd-f8d8-48ff-add0-b6a40fa089a7" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" parentId="#[vars.parentId]" correlationId="#[correlationId]" />
+				<blackboard:get-child-categories doc:name="Course Category - Get Child Categories" doc:id="e0bbcd5d-c169-4d63-b3f4-d66ea65fb5ef" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" parentId="#[vars.parentId]" includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" frontPage="#[isEmpty(attributes.queryParams.frontPage)]" available="#[isEmpty(attributes.queryParams.available)]"/>
 			</when>
 			<otherwise >
 				<blackboard:get-child-categories doc:name="Course Category - Get Child Categories" doc:id="7461af71-3bea-41f1-b08c-7504b420e658" config-ref="Blackboard_config" categoryType="#[vars.categoryType]" parentId="#[vars.parentId]" correlationId="#[correlationId]" categoryId='#[attributes.queryParams.categoryId default ""]' dataSourceId='#[attributes.queryParams.dataSourceId default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" createdCompare='#[attributes.queryParams.createdCompare default ""]' offset='#[attributes.queryParams.offset as Number default 1]' frontPage="#[isEmpty(attributes.queryParams.frontPage)]" fields='#[attributes.queryParams.fields default ""]' available="#[isEmpty(attributes.queryParams.available)]" title='#[attributes.queryParams.title default ""]' sort='#[attributes.queryParams.sort default ""]' limit='#[attributes.queryParams.limit as Number default 10]' created='#[attributes.queryParams.created default ""]'/>
@@ -491,7 +509,7 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 				<blackboard:get-course-roles doc:name="Roles - Get Course Roles" doc:id="b396476e-828b-4e7a-9726-edcc6c178c53" config-ref="Blackboard_config" correlationId="#[correlationId]" />
 			</when>
 			<otherwise >
-				<blackboard:get-course-roles doc:name="Roles - Get Course Roles" doc:id="ac6ac42d-c01a-41b8-9819-2b45e3a2ce27" config-ref="Blackboard_config" correlationId="#[correlationId]" offset='#[attributes.queryParams.offset as Number default 1]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" limit='#[attributes.queryParams.limit as Number default 10]' sort='#[attributes.queryParams.sort default ""]' custom="#[isEmpty(attributes.queryParams.custom)]" roleId='#[attributes.queryParams.roleId default ""]' fields='#[attributes.queryParams.fields default ""]'/>
+				<blackboard:get-course-roles doc:name="Roles - Get Course Roles" doc:id="ac6ac42d-c01a-41b8-9819-2b45e3a2ce27" config-ref="Blackboard_config" correlationId="#[correlationId]" offset='#[attributes.queryParams.offset as Number]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" limit='#[attributes.queryParams.limit as Number]' sort='#[attributes.queryParams.sort default ""]' custom="#[isEmpty(attributes.queryParams.custom)]" roleId='#[attributes.queryParams.roleId default ""]' fields='#[attributes.queryParams.fields default ""]'/>
 			</otherwise>
 		</choice>
     
@@ -750,7 +768,24 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="blackboard-token-subFlow" doc:id="94d43dfd-af64-4dc9-8575-a76845d5ce8c" name="accesstoken_Flow" target="blackboardToken"/>
-		<blackboard:get-terms doc:name="Terms - Get Terms" doc:id="501a9fad-740b-4404-98cb-dc5b875b559e" config-ref="Blackboard_config" correlationId="#[correlationId]"/>
+		<choice doc:name="Choice" doc:id="7bec3ecc-a289-4fc7-a0fa-adda8ca79c4b" >
+			<when expression="#[isEmpty(attributes.queryParams)]">
+				<blackboard:get-terms doc:name="Terms - Get Terms" doc:id="501a9fad-740b-4404-98cb-dc5b875b559e" config-ref="Blackboard_config" correlationId="#[correlationId]" />
+			</when>
+			<otherwise >
+				<choice doc:name="Choice" doc:id="f656c61a-70e2-4262-9740-15be64cf4150" >
+					<when expression="#[(isEmpty(attributes.queryParams.dataSourceId)) and (isEmpty(attributes.queryParams.externalId)) and (isEmpty(attributes.queryParams.fields))]">
+						<blackboard:get-terms doc:name="Terms - Get Terms" doc:id="0445702d-1bfa-48c1-bcbf-b14b487271fe" config-ref="Blackboard_config" correlationId="#[correlationId]" offset="#[attributes.queryParams.offset as Number default 1]" limit="#[attributes.queryParams.limit as Number default 10]" availability.available="#[attributes.queryParams.'availability.available' default &quot;Yes&quot;]" includePermissions="#[isEmpty(attributes.queryParams.includePermission)]" />
+					</when>
+					<when expression="#[(!isEmpty(attributes.queryParams.fields))]">
+						<blackboard:get-terms doc:name="Terms - Get Terms" doc:id="eef7f6ab-a4ae-4c3d-b5b6-c157cbe6f6e4" config-ref="Blackboard_config" fields="#[attributes.queryParams.fields]" correlationId="#[correlationId]"/>
+					</when>
+					<otherwise >
+						<blackboard:get-terms doc:name="Terms - Get Terms" doc:id="531cb38c-3ee5-4253-ba50-796e8dffa732" config-ref="Blackboard_config" includePermissions="#[isEmpty(attributes.queryParams.includePermission)]" availability.available="#[attributes.queryParams.'availability.available' default &quot;Yes&quot;]" correlationId="#[correlationId]" externalId="#[attributes.queryParams.externalId]" dataSourceId="#[attributes.queryParams.dataSourceId]" fields="#[attributes.queryParams.fields]"/>
+					</otherwise>
+				</choice>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="get:\v1\terms\(termId):blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="40783e5b-97e1-47cb-9afe-9e758fb10dca" config-ref="HTTP_Listener_config" path="/v1/terms/{termId}" allowedMethods="GET" >
@@ -786,7 +821,14 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
 				<blackboard:get-users doc:name="Users - Get Users" doc:id="87316201-10b8-47ac-a3ca-e5f4c0738f3d" config-ref="Blackboard_config" correlationId="#[correlationId]" />
 			</when>
 			<otherwise >
-				<blackboard:get-users doc:name="Users - Get Users" doc:id="854a9a09-aead-4fbe-9b58-b0a2e4256500" config-ref="Blackboard_config" correlationId="#[correlationId]" offset='#[attributes.queryParams.offset as Number default 1]' limit='#[attributes.queryParams.limit as Number default 10]' userName='#[attributes.queryParams.userName default ""]' externalId='#[attributes.queryParams.externalId default ""]' created='#[attributes.queryParams.created default ""]' createdCompare='#[attributes.queryParams.createdCompare default ""]' modified='#[attributes.queryParams.modified default ""]' modifiedCompare='#[attributes.queryParams.modified default ""]' lastLogin='#[attributes.queryParams.lastLogin default ""]' lastLoginCompare='#[attributes.queryParams.lastLoginCompare default ""]' dataSourceId='#[attributes.queryParams.dataSourceId default ""]' name.family="#[attributes.queryParams.'name.family' default &quot;&quot;]" studentId='#[attributes.queryParams.studentId default ""]' contact.email="#[attributes.queryParams.'contact.email' default &quot;&quot;]" availability.available="#[attributes.queryParams.'availability.available' default &quot;&quot;]" sort='#[attributes.queryParams.sort default ""]' fields='#[attributes.queryParams.fields default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]"/>
+				<choice doc:name="Choice" doc:id="26aba592-6f99-4825-b43b-6ed071864f80" >
+					<when expression="#[isEmpty(attributes.queryParams.dataSourceId)]">
+						<blackboard:get-users doc:name="Users - Get Users" doc:id="854a9a09-aead-4fbe-9b58-b0a2e4256500" config-ref="Blackboard_config" correlationId="#[correlationId]" offset="#[attributes.queryParams.offset as Number default 1]" limit="#[attributes.queryParams.limit as Number default 10]" userName='#[attributes.queryParams.userName default ""]' externalId='#[attributes.queryParams.externalId default ""]' created='#[attributes.queryParams.created default ""]' createdCompare='#[attributes.queryParams.createdCompare default ""]' modified='#[attributes.queryParams.modified default ""]' modifiedCompare='#[attributes.queryParams.modified default ""]' lastLogin='#[attributes.queryParams.lastLogin default ""]' lastLoginCompare='#[attributes.queryParams.lastLoginCompare default ""]' name.family="#[attributes.queryParams.'name.family' default &quot;&quot;]" studentId='#[attributes.queryParams.studentId default ""]' contact.email="#[attributes.queryParams.'contact.email' default &quot;&quot;]" availability.available="#[attributes.queryParams.'availability.available' default &quot;&quot;]" sort='#[attributes.queryParams.sort default ""]' fields='#[attributes.queryParams.fields default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" />
+					</when>
+					<otherwise >
+						<blackboard:get-users doc:name="Users - Get Users" doc:id="841ae1b6-84b4-41b6-b10f-aee7cfda9750" config-ref="Blackboard_config" offset="#[attributes.queryParams.offset as Number default 1]" limit="#[attributes.queryParams.limit as Number default 10]" includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" userName='#[attributes.queryParams.userName default ""]' externalId='#[attributes.queryParams.externalId default ""]' created='#[attributes.queryParams.created default ""]' createdCompare='#[attributes.queryParams.createdCompare default ""]' modified='#[attributes.queryParams.modified default ""]' modifiedCompare='#[attributes.queryParams.modified default ""]' lastLogin='#[attributes.queryParams.lastLogin default ""]' lastLoginCompare='#[attributes.queryParams.lastLoginCompare default ""]' dataSourceId='#[attributes.queryParams.dataSourceId default ""]' name.family="#[attributes.queryParams.'name.family' default &quot;&quot;]" studentId='#[attributes.queryParams.studentId default ""]' contact.email="#[attributes.queryParams.'contact.email' default &quot;&quot;]" availability.available="#[attributes.queryParams.'availability.available' default &quot;&quot;]" sort='#[attributes.queryParams.sort default ""]' fields='#[attributes.queryParams.fields default ""]' correlationId="#[correlationId]" />
+					</otherwise>
+				</choice>
 			</otherwise>
 		</choice>
     </flow>
@@ -1144,7 +1186,7 @@ output application/json
 		</blackboard:create-course>
 			</otherwise>
 		</choice>
-		<logger level="INFO" doc:name="Logger" doc:id="0fe1e399-345b-4f80-a853-905d36fddb4f" />
+		<set-variable value="#[attributes.statusCode default 201]" doc:name="httpStatus" doc:id="02927bf5-fc52-4f10-807f-285b5619b5bc" variableName="httpStatus" />
     </flow>
     <flow name="patch:\v1\courses\(courseId)\meetings\(meetingId):application\json:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="8da9b204-9c0e-4468-8799-0ce4141ce791" config-ref="HTTP_Listener_config" path="/v1/courses/{courseId}/meetings/{meetingId}" allowedMethods="PATCH" >

@@ -980,14 +980,6 @@ http://www.mulesoft.org/schema/connectivity/blackboard http://www.mulesoft.org/s
             </ee:variables>
         </ee:transform>
         <flow-ref doc:name="blackboard-token-subFlow" doc:id="22591549-2d36-4985-95ac-2b842ab673de" name="accesstoken_Flow" target="blackboardToken"/>
-		<choice doc:name="Choice" doc:id="001db372-b550-4ba6-9862-23a7006c20dd" >
-			<when expression="#[isEmpty(attributes.queryParams)]">
-				<blackboard:get-user-grades doc:name="Course Gradebook - Get User Grades" doc:id="f572cd56-a517-4471-9b80-bcfdbcea68ae" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" />
-			</when>
-			<otherwise >
-				<blackboard:get-user-grades doc:name="Course Gradebook - Get User Grades" doc:id="d01ffa79-5a7c-48b7-85a8-3d123e1579da" config-ref="Blackboard_config" courseId="#[vars.courseId]" userId="#[vars.userId]" firstRelevantDateCompare='#[attributes.queryParams.firstRelevantDateCompare default ""]' lastRelevantDate='#[attributes.queryParams.lastRelevantDate default ""]' firstRelevantDate='#[attributes.queryParams.firstRelevantDate default ""]' includePermissions="#[isEmpty(attributes.queryParams.includePermissions)]" offset='#[attributes.queryParams.offset as Number default 1]' lastRelevantDateCompare='#[attributes.queryParams.lastRelevantDateCompare default ""]' fields='#[attributes.queryParams.fields default ""]' limit='#[attributes.queryParams.limit as Number default 10]' correlationId="#[correlationId]"/>
-			</otherwise>
-		</choice>
     </flow>
     <flow name="get:\v3\courses:blackboard-rest-api-config">
         <http:listener doc:name="Listener" doc:id="32701bd6-51e1-4f23-8967-7e5944b32738" config-ref="HTTP_Listener_config" path="/v3/courses" allowedMethods="GET" >

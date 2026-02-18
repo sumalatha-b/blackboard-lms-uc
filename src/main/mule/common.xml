@@ -17,9 +17,9 @@ output application/java
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<blackboard:access-token doc:name="Token - AccessToken" doc:id="3ee0ac51-0eb4-4963-8e97-b8044c9a04a5" config-ref="Token_Blackboard_config" correlationId="#[correlationId]">
+		<blackboard:token-access-token doc:name="Token Access Token" doc:id="75b89b48-eb13-47ec-9b87-cc39a86f2cb8" config-ref="Token_Blackboard_config" correlationId="#[correlationId]">
 			<blackboard:token_-_access-token--body ><![CDATA[#[payload]]]></blackboard:token_-_access-token--body>
-		</blackboard:access-token>
+		</blackboard:token-access-token>
 		<logger level="INFO" doc:name="Logger" doc:id="148af11d-dd5e-4fb3-b77b-520794a2643a" />
 	</sub-flow>
 </mule>
